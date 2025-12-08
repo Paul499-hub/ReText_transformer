@@ -10,6 +10,5 @@ wheels/
 .venv
 
 # Folders
-datasets/
 saved/
 
