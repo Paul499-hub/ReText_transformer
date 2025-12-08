@@ -45,16 +45,17 @@ ReText is a generative language model built on transformer architecture, trained
 - **Model Variants**: Support for multiple model architectures including standard Transformer and Math models
 
 ## Project Structure
+```
 modules/
     ├── log/               # Model training output (text printed during TRAINING)
     ├── models/
     │   ├── Transformer/   # Main transformer model implementation
-    │   └── Math/          # Alternative math-focused model variant
+    │   └── Math/          # Alternative math-focused model variant 
     ├── ReText.py          # Main trainer with training logic
     ├── batcher.py         # Data batching utilities
     ├── model_config.py    # Configuration classes
     └── saved/             # Trained model checkpoints
 datasets/              # Training datasets
-
+```
 Training
 The model inside modules/saved is trained using AdamW optimizer with cross-entropy loss on next-token prediction tasks. Training details are logged and saved checkpoints allow for resumable training sessions.
