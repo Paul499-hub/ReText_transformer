@@ -7,9 +7,6 @@ uv sync
 ```
 ## Installation [2/2]
 For `CUDA` support - overwrite torch libraries with specific versions for your GPU
-```bash 
-pip install torch==2.2.0+cu118 torchvision==0.17.0+cu118 torchaudio==2.2.0+cu118 -f https://download.pytorch.org/whl/cu118/torch_stable.html
-```
 
 ```bash
 uv pip install torch==2.2.0+cu118 torchvision==0.17.0+cu118 torchaudio==2.2.0+cu118 -f https://download.pytorch.org/whl/cu118/torch_stable.html
