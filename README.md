@@ -27,9 +27,9 @@ PyTorch-based transformer model implementation designed for text generation and 
 
 ![Alt-text](img/Dot_Product.png)
 
-![Alt-text](TrainingLoop.PNG)
+![Alt-text](img/TrainingLoop.PNG)
 
-![Alt-text](TrainedOutput.PNG)
+![Alt-text](img/TrainedOutput.PNG)
 
 ## Overview
 
