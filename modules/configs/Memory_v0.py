@@ -15,3 +15,4 @@ class ModelConfig:
     # Other
     dropout: float
     asserts: bool
+    XSA: bool # Exclusice self attention

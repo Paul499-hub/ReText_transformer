@@ -1,3 +1,4 @@
+import torch.nn.functional as F
 import torch.nn as nn
 import torch 
 # Modules
@@ -34,11 +35,15 @@ class Head(nn.Module):
         if self.config.asserts: assert (V.shape==expected)
         # Attention matrix
         out = Q @ K.transpose(-2,-1)
-        if self.config.asserts: assert out.shape == (B,T,T)
+        if self.config.asserts: assert out.shape == (B,T,T)        
         out = out * self.scale
         out = out.masked_fill(self.tril[:T,:T]==0, float('-inf'))
         out = torch.softmax(out, dim=-1)
         out = self.dropout(out)
         out = out @ V # B,T,T @ B,T,d_head_size --> B,T, d_head_size
+        # XSA
+        if self.config.XSA:
+            Vn = F.normalize(V, dim=-1) # Value normalized, scaled its length to 1
+            out = out - (out * Vn).sum(dim=-1, keepdim=True) * Vn
         if self.config.asserts: assert out.shape == (B,T, self.config.d_head_size)
         return out

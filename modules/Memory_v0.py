@@ -33,11 +33,12 @@ config = ModelConfig(
     d_head_size = 64,
     dropout = 0.1,
     device = device,
-    asserts = False
+    asserts = False,
+    XSA = True,
 )
 lr = 1e-4 
 model = Transformer(config).to(device)
-save_loader = SaveLoader(model, "Math_Addition_Task")
+save_loader = SaveLoader(model, "Math_Addition_XSA")
 save_loader.create_dirs()
 #save_loader.load_model_from_file(load_from_dir=save_loader.save_dir/'Math_Addition_Task_0.02B.pt') #<-- LOAD EXISTING MODEL
 optimizer = torch.optim.AdamW(model.parameters(), lr = lr)
