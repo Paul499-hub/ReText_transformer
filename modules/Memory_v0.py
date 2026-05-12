@@ -5,13 +5,15 @@ import time
 import sys
 import os
 # Modules
-from modules.test import run_tests, test_addition_endocder
+from modules.utils.ModelInputGenerators import generate_model_input
 from modules.models.Memory_v0.transformer import Transformer
+from modules.test import run_tests, test_addition_endocder
 from modules.encoders.MathEncoder import MathEncoder
 from modules.configs.Memory_v0 import ModelConfig
 from modules.utils.SaveLoader import SaveLoader
 from modules.plotter.pyplot import Plotter
-from modules.utils.ModelInputGenerators import generate_model_input
+from modules.utils.Monitors import Monitor
+
 # --------- Launch --------------------------
 # Set-ExecutionPolicy -Scope Process Bypass
 # .\.venv\Scripts\activate
@@ -22,7 +24,7 @@ print( f' CUDA VER:{torch.version.cuda} py ver: {sys.version} pytorch ver: {torc
 enc = MathEncoder()
 #enc = tiktoken.get_encoding('gpt2') # 50257
 config = ModelConfig(
-    B = 64,
+    B = 128,
     T = 11,
     C = 512,
     d_vocab = enc.n_vocab,
@@ -41,6 +43,7 @@ save_loader.create_dirs()
 optimizer = torch.optim.AdamW(model.parameters(), lr = lr)
 plotter = Plotter()
 scaler = torch.cuda.amp.GradScaler() # AMP fp32 -> fp16 scaler (less precision where needed) (backward)
+monitor = Monitor()
 use_AMP = False
 trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 print(f"Trainable parameters: {trainable_params} --> {trainable_params/1e6:.2f}M --> {trainable_params/1e9:.3f}B ")
@@ -55,13 +58,11 @@ if True:
     stop_step = 1000000  # <-- step = 1 training example of shape [T]
     print_q_a_rate = config.B * 200
     save_rate = config.B * 600
-    while_counter = 0
     step_counter = 0
     tokens_seen_window = 0
     try:
         while True:
-            while_counter+=1                         #  optimizer steps / batches
-            step_counter = while_counter * config.B  #  individual examples seen
+            step_counter += config.B  #  individual examples seen
             if step_counter > stop_step:
                 break
             q_batch, a_batch, q_0_str, a_0_str = generate_model_input(enc, config, device, True)
@@ -72,37 +73,12 @@ if True:
                 logits, loss = model.forward(q_batch, a_batch)
             losses.append(loss.item()) # <--- batch mean loss item
             tokens_seen_window += q_batch.numel()
-            # Show info, save plots
-            if step_counter % print_q_a_rate == 0:
-                time_elapsed_window = time.time() - s_t
-                s_t = time.time()
-                tokens_seen_save = tokens_seen_window
-                tokens_seen_window = 0
-                loss_avg.append(sum(losses) / len(losses))
-                l_num = len(losses)
-                losses = []
-                probs = torch.softmax(logits, dim=-1)
-                pred_ids = torch.argmax(probs, dim=-1)
-                text = enc.decode(pred_ids[0].tolist()) # <-- batch aware text decode
-                progress = (step_counter / stop_step) * 100
-                # Print
-                log_text = '\n'.join([
-                    '\n',
-                    "=" * 60,
-                    f"🦵 steps {step_counter}/{stop_step} | {progress:.2f}%",
-                    f"⏱️ elapsed_window: {time_elapsed_window:2f}s",
-                    f'⌚ tok/s: {tokens_seen_save/ time_elapsed_window:.2f}',
-                    f"❓ Q : {q_0_str}",
-                    f" ---> 🎯 A : {a_0_str}",
-                    f" ---> 🦑 P : {text}",
-                    f"📉 loss: {loss.item():.4f}",
-                    f"📊 avg : {loss_avg[-1]:.4f}",
-                    "=" * 60
-                ])
-                print(f'[progress] step {step_counter}/{stop_step} | {progress:.2f}%')
-                save_loader.append_log(log_text)
-            if step_counter % save_rate == 0:
-                save_loader.save_model()
+            plotter.maybe_loss_graph(step_counter, save_rate, loss_avg, save_loader.root_dir/'plt'/f'{save_loader.full_name}.png' )
+            s_t, tokens_seen_window = monitor.maybe_log(
+                            save_loader, enc, logits, loss, loss_avg, losses,
+                            q_0_str, a_0_str, s_t, tokens_seen_window,
+                            step_counter, stop_step, print_q_a_rate)
+            monitor.maybe_save(save_loader,step_counter, save_rate)
             if use_AMP:
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
@@ -113,7 +89,6 @@ if True:
             optimizer.zero_grad(set_to_none=True)
     except KeyboardInterrupt:
         print(f'Training interrupted.')
-    plotter.show_loss_graph(loss_avg, print_q_a_rate )
 
 
 # ------------------------------ INFERENCE ----------------
