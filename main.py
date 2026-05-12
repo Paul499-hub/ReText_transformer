@@ -72,15 +72,11 @@ optimizer = torch.optim.AdamW(model.parameters(), lr = lr)
 trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 step = 0
 epoch = 0
-print(f"Trainable parameters: {trainable_params}")
-# Millions
-print(f"Trainable parameters: {trainable_params/1e6:.2f}M")
-# Billions
-print(f"Trainable parameters: {trainable_params/1e9:.3f}B")
+print(f"Trainable parameters: {trainable_params} --> {trainable_params/1e6:.2f}M --> {trainable_params/1e9:.3f}B ")
 # Loading
 os.makedirs('saved', exist_ok=True)
 os.makedirs('log', exist_ok=True)
-training_name = 'ReText_Harry' 
+training_name = 'ReText_Harry2' 
 full_name = f'{training_name}_size-{trainable_params/1e9:.3f}B_B-{config.d_batch}_T-{config.d_context}_C-{config.d_channel}_nh-{config.num_heads}_tb-{config.num_blocks}_dr-{config.dropout}_V-{config.d_vocab}_lr-{lr}'
 SAVE_MODEL_DIR = os.getcwd() + f'/saved/{full_name}'
 continue_training = False
@@ -193,7 +189,6 @@ while True:
                     print(f"[WARN] Loss spike {loss.item():.4f} (recent avg {recent_avg:.4f}) at step {step}; skipping update")
                     optimizer.zero_grad(set_to_none=True)
                     continue
-
                 # Update good -> step
                 optimizer.step()
                 optimizer.zero_grad(set_to_none=True)

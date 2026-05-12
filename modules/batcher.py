@@ -22,8 +22,7 @@ class RandomBatcher:
         - [batch_size, context_length] = [B, T]
         """
         if self.bs <= 0 or self.data_tensor.size(0) < self.context_len:
-            print(f'------ X ------- Invalid batch. Conditions not met : self.bs <= 0 or self.data_tensor.size(0) < self.context_len')
-            return None  # invalid batch
+            raise ValueError(f'------ X ------- Invalid batch. Conditions not met : self.bs <= 0 or self.data_tensor.size(0) < self.context_len')
         # If we reached the end of starting_points -> return None
         if self.ptr + self.bs > len(self.starting_points):
             return None

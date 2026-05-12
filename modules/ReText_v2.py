@@ -40,11 +40,7 @@ optimizer = torch.optim.AdamW(model.parameters(), lr = lr)
 trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 step = 0
 epoch = 0
-print(f"Trainable parameters: {trainable_params}")
-# Millions
-print(f"Trainable parameters: {trainable_params/1e6:.2f}M")
-# Billions
-print(f"Trainable parameters: {trainable_params/1e9:.3f}B")
+print(f"Trainable parameters: {trainable_params} --> {trainable_params/1e6:.2f}M --> {trainable_params/1e9:.3f}B ")
 # Loading
 os.makedirs('saved', exist_ok=True)
 os.makedirs('log', exist_ok=True)
@@ -69,7 +65,6 @@ with open('../datasets/clean_harry.txt', 'r', encoding = 'utf-8') as f:
     train = f.read().split('|')
 
 # Launch training loop
-
 while False:
     epoch += 1
     c_el=0
@@ -184,58 +179,3 @@ if True:
             print('<<<')
             _input += last_pred
             input(f'[System]: continue?')
-
-
-"""
-Ah, got it—you want to explicitly give the network access to a space of operations applied to the same input and see which ones it learns to leverage, almost like letting it “choose” useful math primitives.
-
-The structure would be something like:
-
-Feed-forward layer produces a vector 
-𝑥
-x.
-
-Create multiple copies of 
-𝑥
-x (or maybe pairs if some ops are binary).
-
-Apply a set of operations to these copies (e.g., elementwise add, multiply, matmul, transpose, maybe even more exotic functions). Each operation produces a separate output.
-
-Concatenate all operation outputs along the feature dimension.
-
-Dimensionality reduction via another linear layer to keep size manageable.
-
-Repeat for multiple layers if desired.
-
-This gives the network a rich algebraic space to explore. You could then analyze learned weights to see which operations contribute most to performance.
-
-
-
-
-
-
-Elementwise / unary:
-
-x (identity) — baseline
-
-x^2 (square) — captures magnitude / quadratic effects
-
-tanh(x) — bounded nonlinearity
-
-Pairwise / binary (elementwise with another vector y, e.g., from same layer):
-
-x + y — additive interactions
-
-x * y — multiplicative interactions
-
-Pooling / reduction:
-
-mean(x) — global averaging
-
-max(x) — highlight strongest signal
-
-This gives 7 operations total. Enough diversity to test interesting combinations without exploding dimensionality, and each operation provides something reasonably unique for the network to leverage.
-
-If you want, I can draft a PyTorch layer skeleton that implements this multi-operation concat + reduction setup.
-
-"""

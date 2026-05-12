@@ -15,8 +15,11 @@ uv pip install torch==2.2.0+cu118 torchvision==0.17.0+cu118 torchaudio==2.2.0+cu
 ---
 # Launch
 ```bash
-uv run main.py
+Set-ExecutionPolicy -Scope Process Bypass
+.\.venv\Scripts\activate
+python -m main.py
 ```
+On windows 11 you might need to disable the smart app control (SAC) to run custom .venv modules
 
 # Description
 
