@@ -22,7 +22,7 @@ print( f' CUDA VER:{torch.version.cuda} py ver: {sys.version} pytorch ver: {torc
 enc = MathEncoder()
 #enc = tiktoken.get_encoding('gpt2') # 50257
 config = ModelConfig(
-    B = 2,
+    B = 64,
     T = 11,
     C = 512,
     d_vocab = enc.n_vocab,
@@ -35,11 +35,13 @@ config = ModelConfig(
 )
 lr = 1e-4 
 model = Transformer(config).to(device)
-save_loader = SaveLoader(model, "Math_Addition_Task_i2")
+save_loader = SaveLoader(model, "Math_Addition_Task")
 save_loader.create_dirs()
 #save_loader.load_model_from_file(load_from_dir=save_loader.save_dir/'Math_Addition_Task_0.02B.pt') #<-- LOAD EXISTING MODEL
 optimizer = torch.optim.AdamW(model.parameters(), lr = lr)
 plotter = Plotter()
+scaler = torch.cuda.amp.GradScaler() # AMP fp32 -> fp16 scaler (less precision where needed) (backward)
+use_AMP = False
 trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 print(f"Trainable parameters: {trainable_params} --> {trainable_params/1e6:.2f}M --> {trainable_params/1e9:.3f}B ")
 print(f'ROOT_DIR:{save_loader.root_dir}')
@@ -50,7 +52,7 @@ if True:
     losses=[]
     loss_avg=[]
     s_t = time.time()
-    stop_step = 100000  # <-- step = 1 training example of shape [T]
+    stop_step = 1000000  # <-- step = 1 training example of shape [T]
     print_q_a_rate = config.B * 200
     save_rate = config.B * 600
     while_counter = 0
@@ -63,7 +65,11 @@ if True:
             if step_counter > stop_step:
                 break
             q_batch, a_batch, q_0_str, a_0_str = generate_model_input(enc, config, device, True)
-            logits, loss = model.forward(q_batch, a_batch)
+            if use_AMP:
+                with torch.autocast(device_type='cuda', dtype=torch.float16):
+                    logits, loss = model.forward(q_batch, a_batch)
+            else:
+                logits, loss = model.forward(q_batch, a_batch)
             losses.append(loss.item()) # <--- batch mean loss item
             tokens_seen_window += q_batch.numel()
             # Show info, save plots
@@ -97,10 +103,13 @@ if True:
                 save_loader.append_log(log_text)
             if step_counter % save_rate == 0:
                 save_loader.save_model()
-            # Backprop
-            loss.backward()
-            # Update good -> step
-            optimizer.step()
+            if use_AMP:
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                optimizer.step()
             optimizer.zero_grad(set_to_none=True)
     except KeyboardInterrupt:
         print(f'Training interrupted.')
