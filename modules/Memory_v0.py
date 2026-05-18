@@ -38,9 +38,10 @@ config = ModelConfig(
 )
 lr = 1e-4 
 model = Transformer(config).to(device)
+# model = torch.compile(model)
 save_loader = SaveLoader(model, "Math_Addition_XSA")
 save_loader.create_dirs()
-#save_loader.load_model_from_file(load_from_dir=save_loader.save_dir/'Math_Addition_Task_0.02B.pt') #<-- LOAD EXISTING MODEL
+save_loader.load_model_from_file(load_from_dir=save_loader.save_dir/'Math_Addition_Task_0.02B.pt') #<-- 😱 LOAD EXISTING MODEL
 optimizer = torch.optim.AdamW(model.parameters(), lr = lr)
 plotter = Plotter()
 scaler = torch.cuda.amp.GradScaler() # AMP fp32 -> fp16 scaler (less precision where needed) (backward)
@@ -52,7 +53,7 @@ print(f'ROOT_DIR:{save_loader.root_dir}')
 print(f"model device: {next(model.parameters()).device}")
 
 # ---------------------------------------------------- TRAINING LOOP -----------------------------------------------
-if True:
+if False:
     losses=[]
     loss_avg=[]
     s_t = time.time()
@@ -93,7 +94,7 @@ if True:
 
 
 # ------------------------------ INFERENCE ----------------
-if False:
+if True:
     config.B = 1 # Set batch size to 1
     while True:
         u_in = input("User input >>>")

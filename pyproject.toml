@@ -6,9 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "datasets>=4.4.1",
+    "encodec>=0.1.1",
     "matplotlib>=3.10.7",
     "nltk>=3.9.2",
     "numpy<2",
+    "soundfile>=0.13.1",
     "tiktoken",
     "torch==2.2.0",
     "torchaudio==2.2.0",

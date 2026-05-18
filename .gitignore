@@ -13,3 +13,6 @@ wheels/
 saved/
 saved_models/
 log/
+plt/
+log/
+datasets/

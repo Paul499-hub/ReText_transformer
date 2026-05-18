@@ -1,12 +1,14 @@
 import os
 import torch
 from pathlib import Path
+# Modules
+from modules.utils.find_project_root import _find_project_root
 
 class SaveLoader:
     def __init__(self, model, training_name:str):
         self.model = model
         self.model_param_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        self.root_dir = self._find_project_root(__file__)
+        self.root_dir = _find_project_root(__file__)
         self.log_dir = self.root_dir / 'log'
         self.save_dir = self.root_dir / 'saved_models'
         self.training_name=training_name
@@ -27,12 +29,3 @@ class SaveLoader:
         log_path = self.log_dir / f"Log_{self.full_name}.txt"
         with open(log_path, 'a', encoding='utf-8') as f:
             print(text, file=f)
-           
-
-    # ------------------ HELPER / PRIVATE --------------------------------- 
-    def _find_project_root(self, start: str) -> Path:
-        start = Path(start).resolve().parent
-        for path in [start, *start.parents]:
-            if (path / "pyproject.toml").exists() or (path / "README.md").exists():
-                return path
-        raise FileNotFoundError("Could not find project root")
